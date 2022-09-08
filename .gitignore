@@ -34,3 +34,6 @@
 # local config file
 config/
 decode/
+
+# local makefile
+Makefile.linux
