@@ -38,6 +38,9 @@ public:
 
     int                     iStart;
 
+    bool                    bPlay;
+    bool                    bSave;
+
     // path for saving decoded picture.
     const char              *path;
 

@@ -67,7 +67,7 @@ void SaveFrame(Decoder *decoder) {
 // Warning! We do not flush avcodec to get the remaining frames.
 // So streamer needs to make sure each frame can be decoded directly without
 // pushing a empty packet into codec.
-void DecodePacketPlay(Decoder *decoder)
+void DecodePacket(Decoder *decoder)
 {
     AVCodecContext      *pVCodecCtx = decoder->pVCodecCtx;
     struct SwsContext   *pSwsCtx    = decoder->pSwsCtx;
@@ -76,7 +76,6 @@ void DecodePacketPlay(Decoder *decoder)
     AVPacket            *pPacket    = decoder->pPacket;
     int32_t             iStream     = decoder->iStream;
     int32_t             iFrame      = decoder->iFrame;
-
 
     int ret = avcodec_send_packet(pVCodecCtx, pPacket);
     if (ret < 0) {
@@ -106,15 +105,16 @@ void DecodePacketPlay(Decoder *decoder)
                 pFrame->linesize, 0, pVCodecCtx->height,
                 pFrameYUV->data, pFrameYUV->linesize);
 
-        {
+        if (decoder->bPlay) {
             scoped_lock lock(decoder->mutex);
             decoder->iStart = 1;
             AVFrame *tmp = decoder->pFrameYUV;
             decoder->pFrameYUV = decoder->pFrameShow;
             decoder->pFrameShow = tmp;
-            // if (decoder->path) {
-            //     SaveFrame(decoder);
-            // }
+        }
+
+        if (decoder->bSave && decoder->path) {
+            SaveFrame(decoder);
         }
     }
 }
@@ -235,6 +235,48 @@ end:
 }
 
 
+void worker_cb(EV_P_ ev_timer *w, int revents) {
+    // AVPacket packet;
+    Decoder *decoder = (Decoder *)w->data;
+
+    int ret = SodtpReadPacket(decoder->pJitter, decoder->pPacket, decoder->pBlock);
+
+
+    if (decoder->pJitter->state == SodtpJitter::STATE_CLOSE) {
+        // Stream is closed.
+        // Thread will be closed by breaking event loop.
+        ev_timer_stop(loop, w);
+        fprintf(stderr, "Stream %d is closed!\n", decoder->iStream);
+        return;
+    }
+
+    if (ret == SodtpJitter::STATE_NORMAL) {
+        // Receive one more block.
+        decoder->iBlock++;
+        // printf("decoding: stream %d,\t block %d,\t size %d,\t received block count %d\n",
+        //     decoder->pBlock->stream_id, decoder->pBlock->block_id,
+        //     decoder->pPacket->size, decoder->iBlock);
+        printf("decoding: stream %d,\t block %d,\t size %d,\t delay %d\n",
+            decoder->pBlock->stream_id, decoder->pBlock->block_id,
+            decoder->pPacket->size, (int)(current_mtime() - decoder->pBlock->block_ts));
+
+        decoder->iFrame = decoder->pBlock->block_id + 1;
+        DecodePacket(decoder);
+    }
+    else if (ret == SodtpJitter::STATE_BUFFERING) {
+        printf("decoding: buffering stream %d\n", decoder->iStream);
+    }
+    else if (ret == SodtpJitter::STATE_SKIP) {
+        printf("decoding: skip one block of stream %d\n", decoder->iStream);
+    }
+    else {
+        printf("decoding: warning! unknown state of stream %d!\n", decoder->iStream);
+    }
+    // Free the packet that was allocated by av_read_frame
+    // av_free_packet(&packet);
+}
+
+
 int video_viewer3(SodtpJitterPtr pJitter, const char *path) {
 
     printf("viewer: viewing stream %u!\n", pJitter->stream_id);
@@ -352,6 +394,8 @@ int video_viewer3(SodtpJitterPtr pJitter, const char *path) {
     decoder.iStream     = pJitter->stream_id;
     decoder.iFrame      = 0;
     decoder.iBlock      = 0;
+    decoder.bPlay       = false;
+    decoder.bSave       = true;
     decoder.path        = path;
 
     ev_timer worker;
@@ -385,48 +429,6 @@ int video_viewer3(SodtpJitterPtr pJitter, const char *path) {
     ev_feed_signal(SIGUSR1);
 
     return 0;
-}
-
-
-void worker_cb4(EV_P_ ev_timer *w, int revents) {
-    // AVPacket packet;
-    Decoder *decoder = (Decoder *)w->data;
-
-    int ret = SodtpReadPacket(decoder->pJitter, decoder->pPacket, decoder->pBlock);
-
-
-    if (decoder->pJitter->state == SodtpJitter::STATE_CLOSE) {
-        // Stream is closed.
-        // Thread will be closed by breaking event loop.
-        ev_timer_stop(loop, w);
-        fprintf(stderr, "Stream %d is closed!\n", decoder->iStream);
-        return;
-    }
-
-    if (ret == SodtpJitter::STATE_NORMAL) {
-        // Receive one more block.
-        decoder->iBlock++;
-        // printf("decoding: stream %d,\t block %d,\t size %d,\t received block count %d\n",
-        //     decoder->pBlock->stream_id, decoder->pBlock->block_id,
-        //     decoder->pPacket->size, decoder->iBlock);
-        printf("decoding: stream %d,\t block %d,\t size %d,\t delay %d\n",
-            decoder->pBlock->stream_id, decoder->pBlock->block_id,
-            decoder->pPacket->size, (int)(current_mtime() - decoder->pBlock->block_ts));
-
-        decoder->iFrame = decoder->pBlock->block_id + 1;
-        DecodePacketPlay(decoder);
-    }
-    else if (ret == SodtpJitter::STATE_BUFFERING) {
-        printf("decoding: buffering stream %d\n", decoder->iStream);
-    }
-    else if (ret == SodtpJitter::STATE_SKIP) {
-        printf("decoding: skip one block of stream %d\n", decoder->iStream);
-    }
-    else {
-        printf("decoding: warning! unknown state of stream %d!\n", decoder->iStream);
-    }
-    // Free the packet that was allocated by av_read_frame
-    // av_free_packet(&packet);
 }
 
 
@@ -564,6 +566,8 @@ int video_viewer4(SodtpJitterPtr pJitter, SDLPlay *splay, const char *path) {
     decoder.iFrame      = 0;
     decoder.iBlock      = 0;
     decoder.iStart      = 0;
+    decoder.bPlay       = true;
+    decoder.bSave       = false;
     // Set the path to be NULL, which means we do not
     // save picture in SDL display mode.
     decoder.path        = NULL;
@@ -576,7 +580,7 @@ int video_viewer4(SodtpJitterPtr pJitter, SDLPlay *splay, const char *path) {
     double nominal = (double)pJitter->get_nominal_depth() / 1000.0;
     double interval = 0.040;    // 40ms, i.e. 25fps
 
-    ev_timer_init(&worker, worker_cb4, nominal, interval);
+    ev_timer_init(&worker, worker_cb, nominal, interval);
     ev_timer_start(loop, &worker);
     worker.data = &decoder;
 
