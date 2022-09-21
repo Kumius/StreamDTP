@@ -6,7 +6,7 @@ CX = g++
 # DTP_DIR			= ../submodule/quiche
 DTP_DIR 		= ../submodule/DTP
 DTP_INC			= $(DTP_DIR)/include
-DTP_LIB			= $(DTP_DIR)/target/release
+DTP_LIB			= $(DTP_DIR)/target/debug
 
 CXFLAGS = -std=c++11 -g
 
@@ -35,6 +35,7 @@ dserver : dtp_server.cxx
 uclient : udp_client.cxx sodtp_jitter.cxx sodtp_block.cxx
 	$(CX) $(CXFLAGS) -o $@ $^ $(INCS) $(LIBS)
 
+# TODO fix udp server.h dependency
 userver : udp_server.cxx
 	$(CX) $(CXFLAGS) -o $@ $^ $(INCS) $(LIBS)
 
