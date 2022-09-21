@@ -277,6 +277,7 @@ void worker_cb(EV_P_ ev_timer *w, int revents) {
 }
 
 
+// decode and save the pictures.
 int video_viewer3(SodtpJitterPtr pJitter, const char *path) {
 
     printf("viewer: viewing stream %u!\n", pJitter->stream_id);
