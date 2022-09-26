@@ -12,12 +12,19 @@ Note that partial code in this repo is built upon [QUICHE](https://github.com/cl
 
 ### Logic flow
 
-There are a client and a server.
+There are a client and a server, and the basic logic is as follows.
+
+```
+server => DTP (snd) => [network...] => DTP (rcv) => block buffer => jitter buffer => client
+```
+
 - The server is responsible for sending streams. Note that for simplicity, these streams are from local files rather than live videos.
   - Please refer to `dtp_server.cxx` for details.
 - The client is responsible for receiving data, decoding frames, and playing them (optional).
   - We use a producer-consumer pattern on the client side. The network thread (producer) will receive, assemble, and store frames in a jitter buffer, and the stream thread (consumer) will fetch, decode, and play the frames.
   - Please refer to `dplay.cxx` for details.
+
+Warning: The size of each block buffer is 2MB.
 
 
 ## Dependencies
@@ -41,7 +48,9 @@ The format of **stream.conf** is as follows:
 - each line: the path to the stream file.
   (Currently, we only display the first 3 streams.)
 
-Update the `DTP_DIR` in the makefile, which should be the path to `quiche.h`
+### Additional settings
+- Update the `DTP_DIR` in the makefile, which should be the path to `quiche.h`
+- The stream file should be in h265 format. You can convert videos (e.g., mp4) to h265 files using ffmpeg.
 
 
 ## Video format

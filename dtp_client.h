@@ -56,6 +56,7 @@
 // #define MAX_SEND_TIMES 25
 #define MAX_SEND_TIMES 4       // max send times before recving.
 
+
 class CONN_IO {
 public:
     ev_timer timer;
@@ -69,9 +70,11 @@ public:
     JitterBuffer *jitter;
 };
 
+
 static void debug_log(const char *line, void *argp) {
     fprintf(stderr, "%s\n", line);
 }
+
 
 static void flush_egress(struct ev_loop *loop, CONN_IO *conn_io) {
     static uint8_t out[MAX_DATAGRAM_SIZE];
@@ -115,6 +118,7 @@ static void flush_egress(struct ev_loop *loop, CONN_IO *conn_io) {
     conn_io->timer.repeat = t;
     ev_timer_again(loop, &conn_io->timer);
 }
+
 
 static void recv_cb(EV_P_ ev_io *w, int revents) {
     static bool req_sent = false;
@@ -233,6 +237,7 @@ static void recv_cb(EV_P_ ev_io *w, int revents) {
 
     flush_egress(loop, conn_io);
 }
+
 
 static void timeout_cb(EV_P_ ev_timer *w, int revents) {
     CONN_IO *conn_io = (CONN_IO *)w->data;

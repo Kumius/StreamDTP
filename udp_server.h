@@ -84,6 +84,7 @@ struct connections {
 
 static struct connections *conns = NULL;
 
+
 static void timeout_cb(EV_P_ ev_timer *w, int revents);
 
 
@@ -103,6 +104,7 @@ static void flush_egress(struct ev_loop *loop, CONN_IO *conn_io) {
     conn_io->timer.repeat = 5.0;
     ev_timer_again(loop, &conn_io->timer);
 }
+
 
 static void send_meta_data(CONN_IO *conn_io, StreamCtxPtr sctx) {
     uint8_t *buf = new uint8_t[sizeof(SodtpStreamHeader) + sizeof(SodtpMetaData)];
@@ -138,6 +140,7 @@ static void send_meta_data(CONN_IO *conn_io, StreamCtxPtr sctx) {
 
     delete[] buf;
 }
+
 
 // To simplify this process.
 // We can send frames each 1/25 second.
@@ -183,6 +186,7 @@ static void sender_cb1(EV_P_ ev_timer *w, int revents) {
         memcpy(buf, &header, sizeof(header));
         memcpy(buf + sizeof(header), packet.data, packet.size);
 
+        // data size should be < 65KB.
         ssize_t sent = sendto(conn_io->sock, buf, sizeof(header) + packet.size, 0,
                           (struct sockaddr *) &conn_io->peer_addr,
                           conn_io->peer_addr_len);
@@ -235,7 +239,7 @@ static void sender_cb1(EV_P_ ev_timer *w, int revents) {
     }
     ///
     ///
-    // 临时设定，用于debug，需要修改。
+    // for debugging
     // if (conn_io->send_round > 10) {
     //     ev_timer_stop(loop, &conn_io->sender);
     // }
@@ -245,6 +249,7 @@ static void sender_cb1(EV_P_ ev_timer *w, int revents) {
     // flush_egress(loop, conn_io);
     // printf("debug: %s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__);
 }
+
 
 static void sender_cb(EV_P_ ev_timer *w, int revents) {
     CONN_IO *conn_io = (CONN_IO *)w->data;
@@ -282,6 +287,7 @@ static void sender_cb(EV_P_ ev_timer *w, int revents) {
             memcpy(buf, &item->header, sizeof(item->header));
             memcpy(buf + sizeof(item->header), item->packet.data, item->packet.size);
 
+            // data size should be < 65KB.
             ssize_t sent = sendto(conn_io->sock, buf, sizeof(item->header) + item->packet.size, 0,
                               (struct sockaddr *) &conn_io->peer_addr,
                               conn_io->peer_addr_len);
@@ -310,7 +316,7 @@ static void sender_cb(EV_P_ ev_timer *w, int revents) {
 
     ///
     ///
-    // 临时设定，用于debug，需要修改。
+    // for debugging
     // if (conn_io->send_round > 10) {
     //     ev_timer_stop(loop, &conn_io->sender);
     // }

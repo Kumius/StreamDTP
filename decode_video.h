@@ -100,12 +100,12 @@ void DecodePacket(Decoder *decoder)
             iStream, iFrame, pVCodecCtx->frame_number);
         fflush(stdout);
 
-        // Convert the image from its native format to YUV
-        sws_scale(pSwsCtx, (uint8_t const * const *)pFrame->data,
-                pFrame->linesize, 0, pVCodecCtx->height,
-                pFrameYUV->data, pFrameYUV->linesize);
-
         if (decoder->bPlay) {
+            // Convert the image from its native format to YUV
+            sws_scale(pSwsCtx, (uint8_t const * const *)pFrame->data,
+                    pFrame->linesize, 0, pVCodecCtx->height,
+                    pFrameYUV->data, pFrameYUV->linesize);
+
             scoped_lock lock(decoder->mutex);
             decoder->iStart = 1;
             AVFrame *tmp = decoder->pFrameYUV;
@@ -114,6 +114,10 @@ void DecodePacket(Decoder *decoder)
         }
 
         if (decoder->bSave && decoder->path) {
+            // Convert the image from its native format to RGB
+            sws_scale(pSwsCtx, (uint8_t const * const *)pFrame->data,
+                    pFrame->linesize, 0, pVCodecCtx->height,
+                    pFrameRGB->data, pFrameRGB->linesize);
             SaveFrame(decoder);
         }
     }
