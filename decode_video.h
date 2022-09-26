@@ -289,7 +289,7 @@ int video_viewer3(SodtpJitterPtr pJitter, const char *path) {
     // Initalizing these to NULL prevents segfaults!
     AVFormatContext         *pVFormatCtx = NULL;
     AVCodecContext          *pVCodecCtx = NULL;
-    AVCodec                 *pVCodec = NULL;
+    const AVCodec           *pVCodec = NULL;
     AVFrame                 *pFrame = NULL;
     AVFrame                 *pFrameRGB = NULL;
     AVPacket                packet;
@@ -445,7 +445,7 @@ int video_viewer4(SodtpJitterPtr pJitter, SDLPlay *splay, const char *path) {
     // Initalizing these to NULL prevents segfaults!
     AVFormatContext         *pVFormatCtx = NULL;
     AVCodecContext          *pVCodecCtx = NULL;
-    AVCodec                 *pVCodec = NULL;
+    const AVCodec           *pVCodec = NULL;
     AVFrame                 *pFrame = NULL;
     AVFrame                 *pFrameYUV = NULL;
     AVFrame                 *pFrameShow = NULL;
