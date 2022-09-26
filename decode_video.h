@@ -72,6 +72,7 @@ void DecodePacket(Decoder *decoder)
     AVCodecContext      *pVCodecCtx = decoder->pVCodecCtx;
     struct SwsContext   *pSwsCtx    = decoder->pSwsCtx;
     AVFrame             *pFrame     = decoder->pFrame;
+    AVFrame             *pFrameRGB  = decoder->pFrameRGB;
     AVFrame             *pFrameYUV  = decoder->pFrameYUV;
     AVPacket            *pPacket    = decoder->pPacket;
     int32_t             iStream     = decoder->iStream;
