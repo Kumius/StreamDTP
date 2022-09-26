@@ -192,8 +192,8 @@ static void sender_cb1(EV_P_ ev_timer *w, int revents) {
                           conn_io->peer_addr_len);
 
         if (sent != sizeof(header) + packet.size) {
-            fprintf(stdout, "failed round %d,\t stream %d,\t block %d,\t size %d\n",
-                    conn_io->send_round, header.stream_id, conn_io->send_round, packet.size);
+            fprintf(stdout, "failed round %d,\t stream %d,\t block %d,\t size %d,\t sent %d, size of header %d\n",
+                    conn_io->send_round, header.stream_id, conn_io->send_round, packet.size, sent, sizeof(header));
         } else {
             fprintf(stdout, "send round %d,\t stream %d,\t block %d,\t size %d\n",
                     conn_io->send_round, header.stream_id, conn_io->send_round, packet.size);
@@ -293,9 +293,10 @@ static void sender_cb(EV_P_ ev_timer *w, int revents) {
                               conn_io->peer_addr_len);
 
             if (sent != sizeof(item->header) + item->packet.size) {
-                fprintf(stdout, "failed round %d,\t stream %d,\t block %d,\t size %d\n",
+                fprintf(stdout, "failed round %d,\t stream %d,\t block %d,\t size %d, sent %d, size of header %d\n",
                         conn_io->send_round, item->header.stream_id,
-                        item->header.block_id, item->packet.size);
+                        item->header.block_id, item->packet.size, sent, sizeof(item->header));
+                exit(-1);
             } else {
                 fprintf(stdout, "send round %d,\t stream %d,\t block %d,\t size %d\n",
                         conn_io->send_round, item->header.stream_id,

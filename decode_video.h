@@ -74,6 +74,7 @@ void DecodePacket(Decoder *decoder)
     AVFrame             *pFrame     = decoder->pFrame;
     AVFrame             *pFrameRGB  = decoder->pFrameRGB;
     AVFrame             *pFrameYUV  = decoder->pFrameYUV;
+    AVFrame             *pFrameRGB  = decoder->pFrameRGB;
     AVPacket            *pPacket    = decoder->pPacket;
     int32_t             iStream     = decoder->iStream;
     int32_t             iFrame      = decoder->iFrame;
@@ -101,6 +102,7 @@ void DecodePacket(Decoder *decoder)
             iStream, iFrame, pVCodecCtx->frame_number);
         fflush(stdout);
 
+
         if (decoder->bPlay) {
             // Convert the image from its native format to YUV
             sws_scale(pSwsCtx, (uint8_t const * const *)pFrame->data,
@@ -116,6 +118,36 @@ void DecodePacket(Decoder *decoder)
 
         if (decoder->bSave && decoder->path) {
             // Convert the image from its native format to RGB
+        
+            if(!pSwsCtx) {
+                printf("pswsctx = NULL\n");
+                fflush(stdout);
+                exit(-1);
+            }
+
+            if(!pFrame->data) {
+                printf("pframe data = NULL\n");
+                fflush(stdout);
+                exit(-1);
+            }
+
+            if(!pFrameYUV->data) {
+                printf("pframeYUV data = NULL\n");
+                fflush(stdout);
+                exit(-1);
+            }
+
+            if(!pFrameYUV->linesize) {
+                printf("pframeYUV linesize = NULL\n");
+                fflush(stdout);
+                exit(-1);
+            }
+
+            if(!pFrame->linesize) {
+                printf("pframe linesize = NULL\n");
+                fflush(stdout);
+                exit(-1);
+            }
             sws_scale(pSwsCtx, (uint8_t const * const *)pFrame->data,
                     pFrame->linesize, 0, pVCodecCtx->height,
                     pFrameRGB->data, pFrameRGB->linesize);

@@ -24,16 +24,19 @@ int main(int argc, char *argv[]) {
     const char *port = argv[2];
 
     const char *path = NULL;
-    if (argc >= 4) {
-        path = argv[3];
-    }
+    // if (argc >= 4) {
+    //     path = argv[3];
+    // }
 
     SaveConfig scon;
     scon.parse("./config/save.conf");
+    printf("parse finished\n");
     if (!path) {
         path = scon.path.c_str();
+        printf("path is %s\n", path);
     }
     if (!scon.save) {
+        printf("do not save fig\n");
         path = NULL;
     }
 
