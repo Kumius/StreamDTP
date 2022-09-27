@@ -131,17 +131,17 @@ void DecodePacket(Decoder *decoder)
                 exit(-1);
             }
 
-            if(!pFrameYUV->data) {
-                printf("pframeYUV data = NULL\n");
-                fflush(stdout);
-                exit(-1);
-            }
+            // if(!pFrameYUV->data) {
+            //     printf("pframeYUV data = NULL\n");
+            //     fflush(stdout);
+            //     exit(-1);
+            // }
 
-            if(!pFrameYUV->linesize) {
-                printf("pframeYUV linesize = NULL\n");
-                fflush(stdout);
-                exit(-1);
-            }
+            // if(!pFrameYUV->linesize) {
+            //     printf("pframeYUV linesize = NULL\n");
+            //     fflush(stdout);
+            //     exit(-1);
+            // }
 
             if(!pFrame->linesize) {
                 printf("pframe linesize = NULL\n");
